@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PapoTreino</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+  :root {
+    --wa-bg: #111b21;
+    --wa-sidebar: #111b21;
+    --wa-sidebar-header: #202c33;
+    --wa-chat-bg: #0b141a;
+    --wa-input-bar: #202c33;
+    --wa-bubble-me: #005c4b;
+    --wa-bubble-her: #202c33;
+    --wa-green: #00a884;
+    --wa-green-dark: #008069;
+    --wa-text: #e9edef;
+    --wa-text-muted: #8696a0;
+    --wa-text-dim: #3b4a54;
+    --wa-divider: #222e35;
+    --wa-hover: #2a3942;
+    --wa-active: #2a3942;
+    --wa-search: #2a3942;
+    --wa-tick: #53bdeb;
+    --radius: 7.5px;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    font-family: 'Inter', -apple-system, sans-serif;
+    background: var(--wa-bg);
+    color: var(--wa-text);
+    height: 100vh;
+    display: flex;
+    overflow: hidden;
+  }
+
+  #sidebar {
+    width: 380px; min-width: 380px;
+    background: var(--wa-sidebar);
+    border-right: 1px solid var(--wa-divider);
+    display: flex; flex-direction: column;
+    height: 100vh;
+  }
+
+  #sidebar-header {
+    background: var(--wa-sidebar-header);
+    padding: 10px 16px;
+    display: flex; align-items: center; justify-content: space-between;
+    height: 60px;
+  }
+
+  .app-title { font-size: 20px; font-weight: 700; color: var(--wa-text); }
+
+  .icon-btn {
+    width: 40px; height: 40px; border-radius: 50%;
+    border: none; background: transparent;
+    color: var(--wa-text-muted);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; font-size: 18px; transition: background .15s;
+  }
+  .icon-btn:hover { background: var(--wa-hover); }
+
+  .search-bar { padding: 8px 12px; background: var(--wa-sidebar); }
+  .search-inner {
+    background: var(--wa-search); border-radius: 8px;
+    display: flex; align-items: center; padding: 7px 12px; gap: 10px;
+  }
+  .search-input {
+    background: none; border: none; outline: none;
+    color: var(--wa-text); font-size: 14px; flex: 1; font-family: inherit;
+  }
+  .search-input::placeholder { color: var(--wa-text-muted); }
+
+  .filter-row {
+    padding: 6px 12px 8px; display: flex; gap: 6px;
+    overflow-x: auto; background: var(--wa-sidebar);
+  }
+  .filter-row::-webkit-scrollbar { display: none; }
+
+  .filter-pill {
+    font-size: 12px; font-weight: 500; padding: 5px 14px;
+    border-radius: 20px; border: none;
+    background: var(--wa-search); color: var(--wa-text-muted);
+    cursor: pointer; white-space: nowrap; transition: all .15s; flex-shrink: 0;
+  }
+  .filter-pill.active { background: var(--wa-green); color: white; }
+
+  #contacts { flex: 1; overflow-y: auto; }
+  #contacts::-webkit-scrollbar { width: 6px; }
+  #contacts::-webkit-scrollbar-thumb { background: var(--wa-text-dim); border-radius: 3px; }
+
+  .contact-item {
+    display: flex; align-items: center; gap: 13px;
+    padding: 10px 16px; cursor: pointer;
+    border-bottom: 1px solid var(--wa-divider); transition: background .1s;
+  }
+  .contact-item:hover { background: var(--wa-hover); }
+  .contact-item.active { background: var(--wa-active); }
+
+  .avatar-wrap { position: relative; flex-shrink: 0; }
+  .avatar { width: 52px; height: 52px; border-radius: 50%; object-fit: cover; background: var(--wa-search); display: block; }
+
+  .online-dot {
+    position: absolute; bottom: 1px; right: 1px;
+    width: 12px; height: 12px; border-radius: 50%;
+    border: 2px solid var(--wa-sidebar); background: var(--wa-text-dim);
+  }
+  .online-dot.online { background: var(--wa-green); }
+  .online-dot.typing-pulse { background: #eab308; animation: pdot 1s infinite; }
+
+  @keyframes pdot {
+    0%,100% { opacity:1; transform:scale(1); }
+    50% { opacity:.5; transform:scale(1.4); }
+  }
+
+  .contact-info { flex: 1; min-width: 0; }
+  .contact-top { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 2px; }
+  .contact-name { font-size: 15px; font-weight: 500; color: var(--wa-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; }
+  .contact-time { font-size: 11px; color: var(--wa-text-muted); flex-shrink: 0; }
+  .contact-bottom { display: flex; justify-content: space-between; align-items: center; }
+  .contact-preview { font-size: 13px; color: var(--wa-text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; }
+
+  .diff-badge { font-size: 9px; font-weight: 700; padding: 2px 6px; border-radius: 10px; margin-left: 6px; flex-shrink: 0; letter-spacing: .3px; text-transform: uppercase; }
+  .diff-facil { background: rgba(0,168,132,.2); color: #00a884; }
+  .diff-medio { background: rgba(234,179,8,.2); color: #eab308; }
+  .diff-dificil { background: rgba(239,68,68,.2); color: #ef4444; }
+  .diff-loucao { background: rgba(168,85,247,.2); color: #a855f7; }
+
+  #main {
+    flex: 1; display: flex; flex-direction: column;
+    height: 100vh; background: var(--wa-chat-bg); position: relative;
+  }
+
+  #main::before {
+    content: ''; position: absolute; inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.02'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    pointer-events: none; z-index: 0;
+  }
+
+  #empty-state {
+    position: relative; z-index: 1; flex: 1;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;
+  }
+  .empty-lock { width: 200px; height: 200px; border-radius: 50%; background: rgba(255,255,255,.04); display: flex; align-items: center; justify-content: center; font-size: 80px; }
+  .empty-title { font-size: 22px; font-weight: 300; color: var(--wa-text); }
+  .empty-sub { font-size: 14px; color: var(--wa-text-muted); text-align: center; max-width: 360px; line-height: 1.6; }
+  .empty-line { width: 1px; height: 30px; background: var(--wa-divider); }
+
+  #chat-area {
+    position: relative; z-index: 1; flex: 1;
+    display: none; flex-direction: column; height: 100vh;
+  }
+
+  #chat-header {
+    background: var(--wa-sidebar-header); padding: 0 16px;
+    display: flex; align-items: center; gap: 12px;
+    height: 60px; flex-shrink: 0; z-index: 2;
+  }
+  .header-avatar { width: 42px; height: 42px; border-radius: 50%; object-fit: cover; cursor: pointer; background: var(--wa-search); display: block; }
+  .header-info { flex: 1; cursor: pointer; }
+  .header-name { font-size: 15px; font-weight: 500; color: var(--wa-text); }
+  .header-status { font-size: 12px; color: var(--wa-text-muted); }
+  .header-actions { display: flex; gap: 2px; }
+
+  #messages { flex: 1; overflow-y: auto; padding: 12px 6%; display: flex; flex-direction: column; gap: 2px; }
+  #messages::-webkit-scrollbar { width: 6px; }
+  #messages::-webkit-scrollbar-thumb { background: rgba(255,255,255,.1); border-radius: 3px; }
+
+  .msg-row { display: flex; align-items: flex-end; gap: 6px; max-width: 65%; animation: slideUp .15s ease; }
+  @keyframes slideUp { from { opacity:0; transform: translateY(6px); } to { opacity:1; transform: translateY(0); } }
+  .msg-row.me { align-self: flex-end; flex-direction: row-reverse; }
+  .msg-row.her { align-self: flex-start; }
+
+  .msg-avatar-sm { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; flex-shrink: 0; margin-bottom: 2px; background: var(--wa-search); display: block; }
+  .bubble-wrap { display: flex; flex-direction: column; max-width: 100%; }
+
+  .bubble { padding: 7px 10px 4px; border-radius: var(--radius); font-size: 14.2px; line-height: 1.5; position: relative; word-break: break-word; }
+  .msg-row.me .bubble { background: var(--wa-bubble-me); border-top-right-radius: 2px; color: var(--wa-text); }
+  .msg-row.her .bubble { background: var(--wa-bubble-her); border-top-left-radius: 2px; color: var(--wa-text); }
+
+  .msg-row.me .bubble::after { content: ''; position: absolute; top: 0; right: -8px; border: 8px solid transparent; border-top-color: var(--wa-bubble-me); border-right: 0; }
+  .msg-row.her .bubble::after { content: ''; position: absolute; top: 0; left: -8px; border: 8px solid transparent; border-top-color: var(--wa-bubble-her); border-left: 0; }
+
+  .bubble-footer { display: flex; align-items: center; justify-content: flex-end; gap: 3px; margin-top: 3px; }
+  .bubble-time { font-size: 11px; color: rgba(233,237,239,.55); }
+  .msg-row.her .bubble-time { color: var(--wa-text-muted); }
+  .ticks { font-size: 14px; color: var(--wa-tick); line-height: 1; }
+
+  .date-sep { display: flex; align-items: center; justify-content: center; margin: 14px 0 10px; }
+  .date-sep span { background: #182229; border-radius: 8px; padding: 4px 12px; font-size: 12px; color: var(--wa-text-muted); font-weight: 500; }
+
+  .typing-bubble {
+    background: var(--wa-bubble-her); border-radius: var(--radius); border-top-left-radius: 2px;
+    padding: 14px 16px; display: flex; gap: 4px; align-items: center; position: relative;
+  }
+  .typing-bubble::after { content: ''; position: absolute; top: 0; left: -8px; border: 8px solid transparent; border-top-color: var(--wa-bubble-her); border-left: 0; }
+  .tdot { width: 8px; height: 8px; border-radius: 50%; background: var(--wa-text-muted); animation: tdot .9s infinite; }
+  .tdot:nth-child(2) { animation-delay: .15s; }
+  .tdot:nth-child(3) { animation-delay: .3s; }
+  @keyframes tdot { 0%,100% { transform: translateY(0); opacity:.5; } 40% { transform: translateY(-5px); opacity:1; } }
+
+  #input-bar { background: var(--wa-input-bar); padding: 8px 16px; display: flex; align-items: flex-end; gap: 10px; flex-shrink: 0; }
+  .input-wrap { flex: 1; background: var(--wa-search); border-radius: 24px; display: flex; align-items: flex-end; padding: 9px 14px; gap: 10px; }
+  .emoji-btn { background: none; border: none; font-size: 22px; cursor: pointer; opacity: .7; line-height: 1; flex-shrink: 0; padding: 0; transition: opacity .15s; }
+  .emoji-btn:hover { opacity: 1; }
+  #msg-input { flex: 1; background: none; border: none; outline: none; color: var(--wa-text); font-size: 15px; font-family: inherit; resize: none; max-height: 120px; line-height: 1.5; }
+  #msg-input::placeholder { color: var(--wa-text-muted); }
+
+  #send-btn { width: 48px; height: 48px; border-radius: 50%; background: var(--wa-green); border: none; color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: background .15s; }
+  #send-btn:hover { background: var(--wa-green-dark); }
+  #send-btn svg { width: 24px; height: 24px; }
+
+  #profile-panel { display: none; width: 300px; min-width: 300px; background: var(--wa-sidebar); border-left: 1px solid var(--wa-divider); overflow-y: auto; z-index: 3; }
+  #profile-panel.open { display: block; }
+  .pp-header { background: var(--wa-sidebar-header); padding: 14px 16px; display: flex; align-items: center; gap: 12px; color: var(--wa-text-muted); font-size: 15px; cursor: pointer; }
+  .pp-cover { height: 200px; background: var(--wa-sidebar-header); display: flex; align-items: center; justify-content: center; }
+  .pp-big-avatar { width: 120px; height: 120px; border-radius: 50%; object-fit: cover; border: 3px solid var(--wa-green); background: var(--wa-search); display: block; }
+  .pp-body { padding: 16px; }
+  .pp-name { font-size: 19px; font-weight: 500; color: var(--wa-text); }
+  .pp-role { font-size: 13px; color: var(--wa-text-muted); margin-top: 2px; }
+  .pp-section { border-top: 1px solid var(--wa-divider); margin-top: 14px; padding-top: 14px; }
+  .pp-label { font-size: 12px; color: var(--wa-green); font-weight: 600; margin-bottom: 6px; text-transform: uppercase; letter-spacing: .5px; }
+  .pp-bio-text { font-size: 14px; color: var(--wa-text-muted); line-height: 1.7; }
+  .pp-interest { display: inline-block; background: var(--wa-search); border-radius: 12px; padding: 4px 10px; font-size: 12px; color: var(--wa-text-muted); margin: 3px 2px; }
+  .pp-tip-box { background: rgba(0,168,132,.08); border-left: 3px solid var(--wa-green); border-radius: 4px; padding: 10px 12px; font-size: 13px; color: var(--wa-text-muted); line-height: 1.6; }
+  .pp-tip-box strong { color: var(--wa-green); display: block; margin-bottom: 4px; }
+
+  /* modal */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.75); z-index: 100; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
+  .modal-box { background: #233138; border-radius: 12px; padding: 32px; max-width: 420px; width: 92%; text-align: center; }
+  .modal-icon { font-size: 52px; margin-bottom: 12px; }
+  .modal-title { font-size: 19px; font-weight: 600; color: var(--wa-text); margin-bottom: 8px; }
+  .modal-text { font-size: 13px; color: var(--wa-text-muted); line-height: 1.7; margin-bottom: 20px; }
+  .modal-steps { text-align: left; background: var(--wa-search); border-radius: 10px; padding: 14px 16px; margin-bottom: 18px; }
+  .modal-steps li { font-size: 13px; color: var(--wa-text-muted); margin-bottom: 8px; line-height: 1.5; padding-left: 4px; }
+  .modal-steps li:last-child { margin-bottom: 0; }
+  .modal-steps a { color: var(--wa-green); text-decoration: none; }
+  .modal-steps a:hover { text-decoration: underline; }
+  .api-input { width: 100%; background: var(--wa-search); border: 1px solid var(--wa-divider); border-radius: 8px; padding: 12px 14px; color: var(--wa-text); font-size: 13px; font-family: monospace; outline: none; margin-bottom: 14px; }
+  .api-input:focus { border-color: var(--wa-green); }
+  .modal-btn-green { background: var(--wa-green); border: none; border-radius: 24px; padding: 12px 28px; color: white; font-size: 14px; font-weight: 600; cursor: pointer; width: 100%; margin-bottom: 10px; transition: background .15s; }
+  .modal-btn-green:hover { background: var(--wa-green-dark); }
+  .modal-btn-ghost { background: transparent; border: 1px solid var(--wa-divider); border-radius: 24px; padding: 10px 28px; color: var(--wa-text-muted); font-size: 13px; cursor: pointer; width: 100%; transition: all .15s; }
+  .modal-btn-ghost:hover { border-color: var(--wa-green); color: var(--wa-green); }
+  .modal-warn { font-size: 11px; color: #eab308; margin-top: 10px; }
+
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(255,255,255,.1); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<!-- API MODAL -->
+<div class="modal-overlay" id="api-modal">
+  <div class="modal-box">
+    <div class="modal-icon">🔑</div>
+    <div class="modal-title">Coloca sua API Key do Gemini</div>
+    <div class="modal-text">100% gratuito — sem precisar de cartão.</div>
+    <ol class="modal-steps">
+      <li>Acessa <a href="https://aistudio.google.com" target="_blank">aistudio.google.com</a></li>
+      <li>Loga com sua conta Google</li>
+      <li>Clica em <strong>"Get API Key"</strong> → <strong>"Create API key"</strong></li>
+      <li>Copia e cola aqui 👇</li>
+    </ol>
+    <input class="api-input" id="api-key-input" type="password" placeholder="Cole sua API key aqui..." />
+    <button class="modal-btn-green" onclick="saveApiKey()">Entrar 🚀</button>
+    <button class="modal-btn-ghost" onclick="useMockMode()">Testar sem API (demo)</button>
+    <div class="modal-warn">⚠️ Modo demo: respostas são fixas, não é IA real</div>
+  </div>
+</div>
+
+<!-- LAYOUT -->
+<div id="sidebar">
+  <div id="sidebar-header">
+    <span class="app-title">PapoTreino</span>
+    <div style="display:flex;gap:4px;">
+      <button class="icon-btn" title="Trocar API key" onclick="resetKey()">⚙️</button>
+    </div>
+  </div>
+  <div class="search-bar">
+    <div class="search-inner">
+      <span style="color:var(--wa-text-muted);font-size:14px;">🔍</span>
+      <input class="search-input" placeholder="Pesquisar conversa" oninput="searchContacts(this.value)" />
+    </div>
+  </div>
+  <div class="filter-row">
+    <button class="filter-pill active" onclick="filterContacts('all',this)">Todas</button>
+    <button class="filter-pill" onclick="filterContacts('facil',this)">Fácil</button>
+    <button class="filter-pill" onclick="filterContacts('medio',this)">Médio</button>
+    <button class="filter-pill" onclick="filterContacts('dificil',this)">Difícil</button>
+    <button class="filter-pill" onclick="filterContacts('loucao',this)">Loucão 🔥</button>
+  </div>
+  <div id="contacts"></div>
+</div>
+
+<div id="main">
+  <div id="empty-state">
+    <div class="empty-lock">📱</div>
+    <div class="empty-title">PapoTreino</div>
+    <div class="empty-sub">Escolhe uma mina na lista ao lado pra começar o treino.</div>
+    <div class="empty-line"></div>
+    <div style="font-size:12px;color:var(--wa-text-muted);display:flex;align-items:center;gap:6px;">🔒 Suas conversas ficam só aqui</div>
+  </div>
+
+  <div id="chat-area">
+    <div id="chat-header">
+      <img class="header-avatar" id="h-avatar" src="" onclick="toggleProfile()" />
+      <div class="header-info" onclick="toggleProfile()">
+        <div class="header-name" id="h-name"></div>
+        <div class="header-status" id="h-status"></div>
+      </div>
+      <div class="header-actions">
+        <button class="icon-btn" onclick="clearChat()">🗑️</button>
+        <button class="icon-btn" onclick="toggleProfile()">👤</button>
+      </div>
+    </div>
+
+    <div style="display:flex;flex:1;overflow:hidden;position:relative;z-index:1;">
+      <div id="messages"></div>
+      <div id="profile-panel">
+        <div class="pp-header" onclick="toggleProfile()">← Fechar</div>
+        <div class="pp-cover"><img class="pp-big-avatar" id="pp-avatar" src="" /></div>
+        <div class="pp-body">
+          <div class="pp-name" id="pp-name"></div>
+          <div class="pp-role" id="pp-role"></div>
+          <div class="pp-section"><div class="pp-label">Bio</div><div class="pp-bio-text" id="pp-bio"></div></div>
+          <div class="pp-section"><div class="pp-label">Interesses</div><div id="pp-interests"></div></div>
+          <div class="pp-section"><div class="pp-label">💡 Dica de abordagem</div><div class="pp-tip-box" id="pp-tip"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="input-bar">
+      <div class="input-wrap">
+        <button class="emoji-btn" onclick="pickEmoji()">😊</button>
+        <textarea id="msg-input" rows="1" placeholder="Mensagem" onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+      </div>
+      <button id="send-btn" onclick="sendMessage()">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M1.101 21.757L23.8 12.028 1.101 2.3l.011 7.912 13.623 1.816-13.623 1.817-.011 7.912z"/></svg>
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+const GIRLS = [
+  {
+    id:1, name:"Larissa", photo:"https://i.pravatar.cc/150?img=47",
+    age:"23 anos", diff:"dificil", diffLabel:"Difícil",
+    role:"Gostosa estilo — influencer de moda", status:"visto hoje às 17h",
+    bio:"Makeup, moda e rolê no shopping. Tem mil seguidores no Insta e sabe disso. Pouca atenção pra quem não tem carisma.",
+    interests:["moda","maquiagem","fotos","balada","sushi"],
+    tip:"<strong>🎯 Como chegar:</strong> Não bajule demais. Comente algo específico do estilo dela, não da beleza. Seja direto mas despretensioso.",
+    personality:`Você é Larissa, 23 anos, influencer de moda e maquiagem em São Paulo. Personalidade: levemente arrogante, gosta de atenção mas não demonstra facilmente, usa muito "né", "nossa", "ai que", "kk". Fala de forma curta e às vezes deixa no vácuo. Se o cara for muito babão você fica entediada. Se for engraçado e confiante você se interessa. Nunca saia do personagem. Responda em português brasileiro informal. Mensagens curtas (1-3 linhas).`,
+    preview:"Oi 😏"
+  },
+  {
+    id:2, name:"Brenda", photo:"https://i.pravatar.cc/150?img=44",
+    age:"21 anos", diff:"facil", diffLabel:"Fácil",
+    role:"Amiguinha descolada — comunicação", status:"online agora",
+    bio:"Super comunicativa, faz amizade fácil. Universitária de comunicação, curte funk, sai todo fim de semana.",
+    interests:["funk","pagode","festa","futebol","séries"],
+    tip:"<strong>🎯 Como chegar:</strong> Seja engraçado e descontraído. Fala de rolês, convida pra sair.",
+    personality:`Você é Brenda, 21 anos, estudante de comunicação no ABC paulista. Personalidade: animada, expansiva, ri fácil, usa "véi", "kkk", "cê", "tô", "pô". Manda mensagens longas às vezes, pergunta muito de volta. Gosta de quem chama pra sair. Adora falar de funk e festas. Nunca saia do personagem. Responda animada e informal.`,
+    preview:"kkk que isso 😂"
+  },
+  {
+    id:3, name:"Isabela", photo:"https://i.pravatar.cc/150?img=45",
+    age:"24 anos", diff:"medio", diffLabel:"Médio",
+    role:"Intelectual — direito na USP", status:"online",
+    bio:"Faz direito na USP, lê muito, opiniões fortes. Detesta gente superficial.",
+    interests:["leitura","política","séries","café","vinho"],
+    tip:"<strong>🎯 Como chegar:</strong> Mostre pensamento próprio. Discorde dela levemente — ela odeia concordata.",
+    personality:`Você é Isabela, 24 anos, estudante de direito na USP. Personalidade: intelectualizada, gosta de debater, tem opiniões fortes, se irrita com respostas rasas. Usa "na real", "olha", "tipo assim". Se o cara for interessante ela fica curiosa. Responda em português culto mas informal.`,
+    preview:"hm, interessante isso"
+  },
+  {
+    id:4, name:"Thaís", photo:"https://i.pravatar.cc/150?img=48",
+    age:"20 anos", diff:"facil", diffLabel:"Fácil",
+    role:"Funkeira autêntica — da quebrada", status:"online",
+    bio:"Ama baile funk, é da quebrada, autêntica, sem frescura. Gosta de quem é verdadeiro.",
+    interests:["funk","selfie","churrasquinho","pagode","rolê"],
+    tip:"<strong>🎯 Como chegar:</strong> Seja autêntico, sem mimimi. Ela detecta falsidade longe.",
+    personality:`Você é Thaís, 20 anos, mora em Itaquera SP. Personalidade: autêntica, usa gírias da quebrada ("mano", "véi", "tô boa", "bora", "firmeza"), animada, não tem paciência pra gente metida. Gosta de quem trata ela como igual. Use gírias populares naturalmente.`,
+    preview:"bora então né kkk"
+  },
+  {
+    id:5, name:"Camila", photo:"https://i.pravatar.cc/150?img=49",
+    age:"25 anos", diff:"loucao", diffLabel:"Loucão",
+    role:"Misteriosa — artista plástica", status:"visto há 3h",
+    bio:"Artista, bohêmia. Às vezes responde super animada, às vezes some por dias. Enigmática.",
+    interests:["arte","tarot","viagem","música indie","natureza"],
+    tip:"<strong>🎯 Como chegar:</strong> Não force. Seja misterioso também. Fale algo profundo ou incomum.",
+    personality:`Você é Camila, 25 anos, artista plástica em Vila Madalena SP. Personalidade: misteriosa, respostas curtas e enigmáticas, às vezes filosófica, às vezes distante. Usa "..." muito. Se o cara for banal perde interesse. Se for original abre mais. Use frases curtas e às vezes poéticas.`,
+    preview:"..."
+  },
+  {
+    id:6, name:"Jéssica", photo:"https://i.pravatar.cc/150?img=41",
+    age:"27 anos", diff:"medio", diffLabel:"Médio",
+    role:"Independente — analista de marketing", status:"online",
+    bio:"Trabalha em empresa grande, tem metas, não perde tempo. Gosta de homem com direção na vida.",
+    interests:["carreira","academia","podcast","viagem","vinho"],
+    tip:"<strong>🎯 Como chegar:</strong> Mostre que você tem ambição. Ela odeia homem parado.",
+    personality:`Você é Jéssica, 27 anos, analista de marketing em SP. Personalidade: objetiva, focada, linguagem direta. Usa "então", "na prática". Responde mais seca de dia, mais relaxada à noite. Gosta de homem com projeto de vida.`,
+    preview:"pode falar"
+  },
+  {
+    id:7, name:"Milena", photo:"https://i.pravatar.cc/150?img=43",
+    age:"22 anos", diff:"loucao", diffLabel:"Loucão",
+    role:"Provocadora — rainha da zoeira", status:"online",
+    bio:"Não leva nada a sério. Se você reclamar ela ri mais ainda.",
+    interests:["meme","zoeira","skate","jogos","fast food"],
+    tip:"<strong>🎯 Como chegar:</strong> Devolva na mesma moeda. Nunca se ofenda — revidie na brincadeira.",
+    personality:`Você é Milena, 22 anos, mora em BH. Personalidade: irreverente, gosta de zoar, testa o cara pra ver se aguenta, usa "hauhuah", "mds", "socorro", "vaza vai". Se ele zoar de volta ela curte muito. Seja engraçada e bem informal.`,
+    preview:"hauuhauh que isso 💀"
+  },
+  {
+    id:8, name:"Rafaela", photo:"https://i.pravatar.cc/150?img=46",
+    age:"26 anos", diff:"medio", diffLabel:"Médio",
+    role:"Conhecida — zona de amizade", status:"visto hoje",
+    bio:"Amiga de amigo. Já se conhecem mas nunca rolou nada. Te trata bem mas nunca deixa claro se é só amizade.",
+    interests:["academia","cachorro","culinária","netflix","praia"],
+    tip:"<strong>🎯 Como chegar:</strong> Saia da posição de amigo gradualmente. Seja mais assertivo sem ser grosseiro.",
+    personality:`Você é Rafaela, 26 anos, conhece o rapaz por amigos em comum. Personalidade: carinhosa, usa "lindão" de brincadeira, fala como amiga próxima. Pode gostar dele mas não quer deixar claro. Se ele avançar pode recuar levemente ou dar uma chance.`,
+    preview:"oi lindão kkk 😄"
+  },
+  {
+    id:9, name:"Aline", photo:"https://i.pravatar.cc/150?img=42",
+    age:"28 anos", diff:"dificil", diffLabel:"Difícil",
+    role:"Desconhecida — match recente", status:"online",
+    bio:"Match recente. Não te conhece, pode cortar a conversa a qualquer hora.",
+    interests:["viagem","gastronomia","fitness","fotografia","yoga"],
+    tip:"<strong>🎯 Como chegar:</strong> Abertura criativa. Não mande 'oi' genérico. Faça uma observação inteligente.",
+    personality:`Você é Aline, 28 anos, match recente no Tinder. Personalidade: papo genérico ela ignora. Se o cara for criativo ela engaja. Usa "hmm", "nossa", "sério?". Dá uma ou duas chances antes de desistir. Alta autoestima.`,
+    preview:"hmm que foi"
+  },
+  {
+    id:10, name:"Vitória", photo:"https://i.pravatar.cc/150?img=40",
+    age:"19 anos", diff:"facil", diffLabel:"Fácil",
+    role:"Calourina — tímida e curiosa", status:"online",
+    bio:"Primeiro ano de faculdade, tímida mas curiosa. Fácil de conversar quando se sente à vontade.",
+    interests:["anime","música","leitura","gatos","culinária"],
+    tip:"<strong>🎯 Como chegar:</strong> Seja gentil e paciente. Construa conexão primeiro.",
+    personality:`Você é Vitória, 19 anos, caloura de psicologia. Personalidade: um pouco tímida, usa "haha" quando fica sem jeito. Curte anime, música e gatos. Se o cara for gentil vai abrindo. Se for muito agressivo fica na dela. Usa "ahh", "é verdade", "que legal".`,
+    preview:"oii haha 😊"
+  }
+];
+
+let apiKey = localStorage.getItem('pt_gemini_key') || null;
+let mockMode = false;
+let currentGirl = null;
+let chatHistories = {};
+let profileOpen = false;
+let currentFilter = 'all';
+let searchTerm = '';
+
+function init() {
+  if (apiKey) document.getElementById('api-modal').style.display = 'none';
+  renderContacts();
+}
+
+function saveApiKey() {
+  const val = document.getElementById('api-key-input').value.trim();
+  if (!val || val.length < 10) {
+    alert('Cole sua API key do Gemini aqui.\nGera em: aistudio.google.com');
+    return;
+  }
+  apiKey = val;
+  localStorage.setItem('pt_gemini_key', val);
+  document.getElementById('api-modal').style.display = 'none';
+}
+
+function useMockMode() {
+  mockMode = true;
+  document.getElementById('api-modal').style.display = 'none';
+}
+
+function resetKey() {
+  if (confirm('Trocar API key?')) {
+    localStorage.removeItem('pt_gemini_key');
+    apiKey = null;
+    document.getElementById('api-key-input').value = '';
+    document.getElementById('api-modal').style.display = 'flex';
+  }
+}
+
+function fallbackSrc(name) {
+  return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=202c33&color=00a884&size=128&bold=true`;
+}
+
+function renderContacts() {
+  const container = document.getElementById('contacts');
+  container.innerHTML = '';
+  let list = GIRLS;
+  if (currentFilter !== 'all') list = list.filter(g => g.diff === currentFilter);
+  if (searchTerm) list = list.filter(g => g.name.toLowerCase().includes(searchTerm.toLowerCase()));
+
+  list.forEach(g => {
+    const history = chatHistories[g.id] || [];
+    const lastMsg = history.length > 0 ? history[history.length-1] : null;
+    const preview = lastMsg ? lastMsg.content.substring(0, 38) + (lastMsg.content.length > 38 ? '…' : '') : g.preview;
+    const now = new Date();
+    const t = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
+
+    const el = document.createElement('div');
+    el.className = 'contact-item' + (currentGirl?.id === g.id ? ' active' : '');
+    el.onclick = () => openChat(g);
+    el.innerHTML = `
+      <div class="avatar-wrap">
+        <img class="avatar" src="${g.photo}" onerror="this.src='${fallbackSrc(g.name)}'" />
+        <div class="online-dot ${g.diff === 'facil' ? 'online' : ''}"></div>
+      </div>
+      <div class="contact-info">
+        <div class="contact-top">
+          <span class="contact-name">${g.name}</span>
+          <span class="contact-time">${t}</span>
+        </div>
+        <div class="contact-bottom">
+          <span class="contact-preview">${preview}</span>
+          <span class="diff-badge diff-${g.diff}">${g.diffLabel}</span>
+        </div>
+      </div>`;
+    container.appendChild(el);
+  });
+}
+
+function filterContacts(f, btn) {
+  currentFilter = f;
+  document.querySelectorAll('.filter-pill').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderContacts();
+}
+
+function searchContacts(v) { searchTerm = v; renderContacts(); }
+
+function openChat(girl) {
+  currentGirl = girl;
+  if (!chatHistories[girl.id]) chatHistories[girl.id] = [];
+
+  document.getElementById('empty-state').style.display = 'none';
+  document.getElementById('chat-area').style.display = 'flex';
+
+  const ha = document.getElementById('h-avatar');
+  ha.src = girl.photo;
+  ha.onerror = () => ha.src = fallbackSrc(girl.name);
+  document.getElementById('h-name').textContent = girl.name;
+  document.getElementById('h-status').textContent = girl.status;
+
+  const pa = document.getElementById('pp-avatar');
+  pa.src = girl.photo;
+  pa.onerror = () => pa.src = fallbackSrc(girl.name);
+  document.getElementById('pp-name').textContent = girl.name;
+  document.getElementById('pp-role').textContent = girl.age + ' • ' + girl.role;
+  document.getElementById('pp-bio').textContent = girl.bio;
+  document.getElementById('pp-interests').innerHTML = girl.interests.map(i => `<span class="pp-interest">${i}</span>`).join('');
+  document.getElementById('pp-tip').innerHTML = girl.tip;
+
+  renderMessages();
+  renderContacts();
+  document.getElementById('msg-input').value = '';
+  document.getElementById('msg-input').focus();
+  setTimeout(() => { const m = document.getElementById('messages'); m.scrollTop = m.scrollHeight; }, 60);
+}
+
+function renderMessages() {
+  const c = document.getElementById('messages');
+  c.innerHTML = '';
+  const sep = document.createElement('div');
+  sep.className = 'date-sep';
+  sep.innerHTML = '<span>HOJE</span>';
+  c.appendChild(sep);
+  (chatHistories[currentGirl.id] || []).forEach(m => appendMessageEl(m.role, m.content, false));
+  c.scrollTop = c.scrollHeight;
+}
+
+function appendMessageEl(role, content, animate = true) {
+  const c = document.getElementById('messages');
+  const isMe = role === 'user';
+  const g = currentGirl;
+  const now = new Date();
+  const t = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
+  const row = document.createElement('div');
+  row.className = `msg-row ${isMe ? 'me' : 'her'}`;
+  row.innerHTML = `
+    ${!isMe ? `<img class="msg-avatar-sm" src="${g.photo}" onerror="this.src='${fallbackSrc(g.name)}'" />` : ''}
+    <div class="bubble-wrap">
+      <div class="bubble">
+        ${escapeHtml(content).replace(/\n/g,'<br>')}
+        <div class="bubble-footer">
+          <span class="bubble-time">${t}</span>
+          ${isMe ? '<span class="ticks">✓✓</span>' : ''}
+        </div>
+      </div>
+    </div>`;
+  c.appendChild(row);
+  c.scrollTop = c.scrollHeight;
+}
+
+function showTyping() {
+  const c = document.getElementById('messages');
+  const g = currentGirl;
+  const row = document.createElement('div');
+  row.className = 'msg-row her'; row.id = 'typing-row';
+  row.innerHTML = `<img class="msg-avatar-sm" src="${g.photo}" onerror="this.src='${fallbackSrc(g.name)}'" /><div class="typing-bubble"><div class="tdot"></div><div class="tdot"></div><div class="tdot"></div></div>`;
+  c.appendChild(row);
+  c.scrollTop = c.scrollHeight;
+  document.getElementById('h-status').textContent = 'digitando...';
+  document.querySelectorAll('.contact-item.active .online-dot').forEach(d => d.className = 'online-dot typing-pulse');
+}
+
+function hideTyping() {
+  const el = document.getElementById('typing-row');
+  if (el) el.remove();
+  if (currentGirl) document.getElementById('h-status').textContent = currentGirl.status;
+  document.querySelectorAll('.contact-item.active .online-dot').forEach(d => d.className = 'online-dot online');
+}
+
+async function sendMessage() {
+  const inp = document.getElementById('msg-input');
+  const text = inp.value.trim();
+  if (!text || !currentGirl) return;
+  inp.value = ''; inp.style.height = 'auto';
+
+  const girl = currentGirl;
+  if (!chatHistories[girl.id]) chatHistories[girl.id] = [];
+  chatHistories[girl.id].push({ role: 'user', content: text });
+  appendMessageEl('user', text);
+  renderContacts();
+
+  await sleep(600 + Math.random() * 900);
+  showTyping();
+  await sleep(1400 + Math.random() * 2400);
+  hideTyping();
+
+  const reply = mockMode ? getMockReply(girl) : await callGemini(girl);
+  chatHistories[girl.id].push({ role: 'assistant', content: reply });
+  appendMessageEl('assistant', reply);
+  renderContacts();
+}
+
+async function callGemini(girl) {
+  const history = chatHistories[girl.id] || [];
+
+  // Build Gemini contents array
+  // System instruction goes separately, then conversation
+  const contents = [];
+  for (const m of history) {
+    contents.push({
+      role: m.role === 'user' ? 'user' : 'model',
+      parts: [{ text: m.content }]
+    });
+  }
+
+  const body = {
+    system_instruction: {
+      parts: [{ text: girl.personality + `\n\nIMPORTANTE: Responda APENAS como ${girl.name}. Mensagens curtas e naturais, estilo WhatsApp. Nunca quebre o personagem. Nunca diga que é IA.` }]
+    },
+    contents,
+    generationConfig: {
+      maxOutputTokens: 200,
+      temperature: 0.95
+    }
+  };
+
+  try {
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+      { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }
+    );
+    const data = await res.json();
+    if (data.error) throw new Error(data.error.message);
+    return data.candidates[0].content.parts[0].text.trim();
+  } catch (err) {
+    return `[Erro: ${err.message}]`;
+  }
+}
+
+function getMockReply(girl) {
+  const r = {
+    1:["hmm tá 🙄","kk que isso né","nossa hm","sei lá","oi pode falar"],
+    2:["KKKKK que isso véi","pooo que demais","sim conta mais","kkk mds","verdade né omg"],
+    3:["interessante isso...","hm e você acha que...","na real faz sentido","sério? nunca pensei assim","isso levanta uma questão"],
+    4:["firmeza véi kkk","bora então","isso aí","kkk para né","verdade mano"],
+    5:["...","hm.","por que você pergunta isso?","talvez.","não sei ainda"],
+    6:["pode falar","entendi","faz sentido","vou ver aqui","ok, e daí?"],
+    7:["HAUHUAHUAH para 💀","socorro que isso kk","não acredito","vaza vai kkk","mds que pessoa"],
+    8:["oi lindão kkk 😄","nossa que isso","ai você é demais","kk que saudade","isso não viu"],
+    9:["hmm","interessante","não esperava isso","pode continuar","sério mesmo?"],
+    10:["oii haha 😊","ahh que legal!","verdade né!","não sabia isso!","haha com vergonha agora"]
+  };
+  const opts = r[girl.id];
+  return opts[Math.floor(Math.random() * opts.length)];
+}
+
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+function escapeHtml(t) { return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function handleKey(e) { if (e.key==='Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } }
+function autoResize(el) { el.style.height='auto'; el.style.height=Math.min(el.scrollHeight,120)+'px'; }
+function clearChat() { if (!currentGirl || !confirm(`Limpar conversa com ${currentGirl.name}?`)) return; chatHistories[currentGirl.id]=[]; renderMessages(); renderContacts(); }
+function toggleProfile() { profileOpen=!profileOpen; document.getElementById('profile-panel').classList.toggle('open',profileOpen); }
+function pickEmoji() {
+  const emojis=['😂','❤️','😅','🔥','😍','😭','🤣','✨','🥰','😏','🙃','😜','🤔','😎','💀','🫡','😤','🫠'];
+  const e=emojis[Math.floor(Math.random()*emojis.length)];
+  const inp=document.getElementById('msg-input');
+  const pos=inp.selectionStart;
+  inp.value=inp.value.slice(0,pos)+e+inp.value.slice(pos);
+  inp.selectionStart=inp.selectionEnd=pos+e.length;
+  inp.focus();
+}
+
+init();
+</script>
+</body>
+</html>
